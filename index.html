@@ -78,9 +78,60 @@
     let database = {};
     let currentPeriod = "";
 
-    const hotelStructure = { /* ... твоя структура готелю залишається без змін ... */ };
-    // (Я не вставляю всю структуру, щоб не було дуже довго. Просто скопіюй її з попередньої версії)
-
+  const hotelStructure = {
+      konstantin: {
+        floors: {
+          1: [
+            {number: 101, type: "односпальне односпальне", maxGuests: 2},
+            {number: 102, type: "односпальне односпальне", maxGuests: 2},
+            {number: 103, type: "односпальне односпальне", maxGuests: 2},
+            {number: 104, type: "двоспальне односпальне", sea: true, maxGuests: 3},
+            {number: 105, type: "односпальне односпальне односпальне", sea: true, maxGuests: 3},
+            {number: 106, type: "односпальне односпальне", maxGuests: 2},
+            {number: 107, type: "односпальне односпальне", maxGuests: 2},
+            {number: 108, type: "односпальне односпальне", maxGuests: 2},
+            {number: 109, type: "односпальне односпальне", maxGuests: 2},
+            {number: 110, type: "односпальне односпальне", maxGuests: 2},
+            {number: 111, type: "односпальне односпальне односпальне", maxGuests: 3},
+            {number: 112, type: "двоспальне односпальне", maxGuests: 3},
+			{number: 113, type: "односпальне односпальне", maxGuests: 2},
+			{number: 114, type: "односпальне односпальне", maxGuests: 2}
+          ],
+          2: [
+            {number: 201, type: "односпальне односпальне", maxGuests: 2}, 
+            {number: 202, type: "односпальне односпальне", maxGuests: 2}, 
+            {number: 203, type: "односпальне односпальне", maxGuests: 2},
+            {number: 204, type: "односпальне односпальне односпальне", sea: true, maxGuests: 3}, 
+            {number: 205, type: "односпальне односпальне односпальне", sea: true, maxGuests: 3},
+            {number: 206, type: "односпальне односпальне + extra bed", maxGuests: 3}, 
+            {number: 207, type: "односпальне односпальне + extra bed", maxGuests: 3},
+            {number: 208, type: "односпальне односпальне", maxGuests: 2}, 
+            {number: 209, type: "односпальне односпальне", maxGuests: 2}, 
+            {number: 210, type: "односпальне односпальне", maxGuests: 2},
+            {number: 211, type: "двоспальне односпальне + extra bed", maxGuests: 3}, 
+            {number: 212, type: "двоспальне односпальне + extra bed ", maxGuests: 3},
+            {number: 213, type: "односпальне односпальне", maxGuests: 2}, 
+            {number: 214, type: "односпальне односпальне", maxGuests: 2}
+          ],
+          3: [
+            {number: 301, type: "односпальне односпальне", maxGuests: 2}, 
+            {number: 302, type: "односпальне односпальне + extra bed", maxGuests: 3}, 
+            {number: 303, type: "односпальне односпальне + extra bed", maxGuests: 3}, 
+            {number: 304, type: "двоспальне односпальне", sea: true, maxGuests: 3},
+            {number: 305, type: "односпальне односпальне односпальне", sea: true, maxGuests: 3}, 
+            {number: 306, type: "односпальне односпальне", maxGuests: 2},
+            {number: 307, type: "односпальне односпальне", maxGuests: 2}, 
+            {number: 308, type: "односпальне односпальне", maxGuests: 2}, 
+            {number: 309, type: "односпальне односпальне", maxGuests: 2},
+            {number: 310, type: "односпальне односпальне", maxGuests: 2}, 
+            {number: 311, type: "двоспальне односпальне", maxGuests: 3}, 
+            {number: 312, type: "двоспальне односпальне", maxGuests: 3}, 
+            {number: 313, type: "односпальне односпальне", maxGuests: 2},
+            {number: 314, type: "двоспальне (без спинки) + extra bed", maxGuests: 3}
+          ]
+        }
+      }
+    };
     // ================== ОСНОВНІ ФУНКЦІЇ ==================
     async function loadBookingsFromSheet(period) {
       try {
