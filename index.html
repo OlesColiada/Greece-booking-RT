@@ -140,7 +140,7 @@
       }
     };
 
-    async function loadBookingsFromSheet(period) {
+ async function loadBookingsFromSheet(period) {
   try {
     const response = await fetch(WEB_APP_URL, {
       method: "POST",
@@ -149,17 +149,14 @@
     });
     
     const result = await response.json();
-    console.log("Отримані дані:", result);
+    console.log("Отримані дані для", period, ":", result);
     
-    // Виправлення для твого сервера
     if (result.success || result.status === "success") {
       database[period] = result.bookings || [];
-      console.log(`✅ Завантажено ${database[period].length} бронювань для ${period}`);
-    } else {
-      console.warn("Сервер повернув помилку:", result);
+      console.log(`✅ Завантажено ${database[period].length} бронювань`);
     }
   } catch (e) {
-    console.error("Помилка завантаження:", e);
+    console.error("Помилка:", e);
   }
 }
 
