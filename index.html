@@ -257,7 +257,6 @@ async function confirmBooking() {
   if (!requestNum || requestNum.length < 4) 
     return alert("Введіть номер заявки (4-5 цифр)");
 
-  // Перевірка місткості
   let maxCapacity = 4;
   Object.values(hotelStructure.konstantin.floors).forEach(floor => {
     const room = floor.find(r => r.number === roomNum);
@@ -278,8 +277,6 @@ async function confirmBooking() {
   };
 
   try {
-    console.log("Відправляємо дані:", bookingData);
-
     const response = await fetch(WEB_APP_URL, {
       method: "POST",
       headers: { "Content-Type": "text/plain;charset=utf-8" },
@@ -287,26 +284,27 @@ async function confirmBooking() {
     });
 
     const text = await response.text();
-    console.log("Відповідь від сервера (текст):", text);
+    console.log("Відповідь від сервера:", text);
 
     let result;
     try {
       result = JSON.parse(text);
     } catch (e) {
-      result = { success: false, message: "Сервер повернув не JSON" };
+      result = { success: false, message: "Невірний формат відповіді" };
     }
 
-    console.log("Розпарсений результат:", result);
+    // Виправлення для твоєї поточної відповіді сервера
+    const isSuccess = result.success === true || result.status === "success";
 
-    if (result.success === true) {
+    if (isSuccess) {
       alert("✅ Кімната успішно заброньована!");
       closeModal();
       await loadData();
     } else {
-      alert("❌ " + (result.message || "Невідома помилка від сервера"));
+      alert("❌ " + (result.message || "Помилка бронювання"));
     }
   } catch (error) {
-    console.error("Помилка:", error);
+    console.error(error);
     alert("Помилка підключення до сервера");
   }
 }
