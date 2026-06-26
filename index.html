@@ -247,37 +247,63 @@
     }
 
     async function confirmBooking() {
-      // ... (валідація номеру заявки та місткості — без змін) ...
-      const requestNum = document.getElementById('requestNum').value.trim();
-      const adults = parseInt(document.getElementById('adults').value) || 0;
-      const kids612 = parseInt(document.getElementById('kids612').value) || 0;
-      const kidsUnder6 = parseInt(document.getElementById('kidsUnder6').value) || 0;
-      const total = adults + kids612 + kidsUnder6;
-      const roomNum = parseInt(document.getElementById('modalRoomNumber').textContent);
+  const requestNum = document.getElementById('requestNum').value.trim();
+  const adults = parseInt(document.getElementById('adults').value) || 0;
+  const kids612 = parseInt(document.getElementById('kids612').value) || 0;
+  const kidsUnder6 = parseInt(document.getElementById('kidsUnder6').value) || 0;
+  const total = adults + kids612 + kidsUnder6;
+  const roomNum = parseInt(document.getElementById('modalRoomNumber').textContent);
 
-      if (!requestNum || requestNum.length < 4) return alert("Введіть номер заявки (4-5 цифр)");
+  if (!requestNum || requestNum.length < 4) 
+    return alert("Введіть номер заявки (4-5 цифр)");
 
-      let maxCapacity = 4;
-      Object.values(hotelStructure.konstantin.floors).forEach(floor => {
-        const room = floor.find(r => r.number === roomNum);
-        if (room) maxCapacity = room.maxGuests || 4;
-      });
-      if (total > maxCapacity) return alert(`Недостатньо місць! Максимум ${maxCapacity} осіб.`);
+  let maxCapacity = 4;
+  Object.values(hotelStructure.konstantin.floors).forEach(floor => {
+    const room = floor.find(r => r.number === roomNum);
+    if (room) maxCapacity = room.maxGuests || 4;
+  });
+  if (total > maxCapacity) 
+    return alert(`Недостатньо місць! Максимум ${maxCapacity} осіб у кімнаті ${roomNum}.`);
 
-      const bookingData = { action: "book", period: currentPeriod, room: roomNum, requestId: requestNum, adults, kids612, kidsUnder6, total };
+  const bookingData = {
+    action: "book",
+    period: currentPeriod,
+    room: roomNum,
+    requestId: requestNum,
+    adults: adults,
+    kids612: kids612,
+    kidsUnder6: kidsUnder6,
+    total: total
+  };
 
-      try {
-        const res = await fetch(WEB_APP_URL, { method: "POST", headers: {"Content-Type": "text/plain;charset=utf-8"}, body: JSON.stringify(bookingData) });
-        const result = await res.json();
-        if (result.success) {
-          alert("✅ Заброньовано!");
-          closeModal();
-          await loadData();   // ← оновлення
-        } else {
-          alert(result.message || "Помилка");
-        }
-      } catch (e) { alert("Помилка сервера"); }
+  try {
+    const response = await fetch(WEB_APP_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(bookingData)
+    });
+
+    let result;
+    try {
+      result = await response.json();
+    } catch (e) {
+      result = { success: false, message: "Сервер повернув некоректну відповідь" };
     }
+
+    console.log("Відповідь від сервера:", result); // ← для діагностики
+
+    if (result.success) {
+      alert("✅ Кімната успішно заброньована!");
+      closeModal();
+      await loadData();
+    } else {
+      alert("❌ " + (result.message || "Помилка бронювання"));
+    }
+  } catch (error) {
+    console.error("Помилка fetch:", error);
+    alert("❌ Помилка підключення до сервера. Перевірте інтернет та URL скрипту.");
+  }
+}
 
     async function cancelBooking(roomNum) {
       if (!confirm(`Відмінити бронювання ${roomNum}?`)) return;
