@@ -173,18 +173,28 @@
 
     // ================== ЗАВАНТАЖЕННЯ ДАНИХ ==================
     async function loadBookingsFromSheet(period) {
-      try {
-        const response = await fetch(WEB_APP_URL, {
-          method: "POST",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify({ action: "getBookings", period: period })
-        });
-        const result = await response.json();
-        if (result.success) database[period] = result.bookings || [];
-      } catch (error) {
-        console.error("Помилка завантаження:", error);
-      }
+  try {
+    const response = await fetch(WEB_APP_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ action: "getBookings", period: period })
+    });
+
+    const text = await response.text();
+    console.log("getBookings відповідь:", text);
+
+    let result = JSON.parse(text);
+
+    if (result.success) {
+      database[period] = result.bookings || [];
+      console.log(`Завантажено ${database[period].length} бронювань`);
+    } else {
+      console.warn("getBookings не успіх:", result);
     }
+  } catch (error) {
+    console.error("Помилка getBookings:", error);
+  }
+}
 
     function loadRooms() {
       const grid = document.getElementById('roomsGrid');
