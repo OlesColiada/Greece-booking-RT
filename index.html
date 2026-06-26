@@ -20,6 +20,14 @@
       background: linear-gradient(90deg, #1e3a8a, #3b82f6);
       color: white;
     }
+    .request-num {
+      font-size: 1.1rem;
+      font-weight: 700;
+      background: rgba(255,255,255,0.25);
+      padding: 4px 10px;
+      border-radius: 9999px;
+      margin-top: 6px;
+    }
   </style>
 </head>
 <body class="bg-gray-100">
@@ -47,7 +55,7 @@
     </div>
   </div>
 
-  <!-- Модальне вікно -->
+  <!-- Модальне вікно бронювання -->
   <div id="bookingModal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center">
     <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full mx-4 p-8">
       <h2 class="text-2xl font-bold mb-6">Бронювання кімнати <span id="modalRoomNumber" class="text-blue-600"></span></h2>
@@ -69,16 +77,33 @@
     </div>
   </div>
 
+  <!-- Модальне вікно пароля -->
+  <div id="passwordModal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+    <div class="bg-white rounded-3xl shadow-2xl max-w-sm w-full mx-4 p-8">
+      <h2 class="text-2xl font-bold text-center mb-6">Введіть пароль доступу</h2>
+      <input id="passwordInput" type="password" maxlength="4" 
+             class="w-full p-6 text-3xl text-center border-2 border-gray-300 rounded-2xl tracking-widest" 
+             placeholder="••••">
+      <button onclick="checkPassword()" 
+              class="mt-6 w-full bg-blue-600 text-white py-4 rounded-2xl text-lg font-medium">
+        Увійти
+      </button>
+    </div>
+  </div>
+
   <script>
     // ================== НАЛАШТУВАННЯ ==================
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyDDyNqQtcycmAEl_LwdwBK63vHpE2ASPw8CEkgaP2fobErztYX9h4jms0eot8k9ysX/exec"; // ← ЗАМІНИ НА СВІЙ URL !!!
-    
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyDDyNqQtcycmAEl_LwdwBK63vHpE2ASPw8CEkgaP2fobErztYX9h4jms0eot8k9ysX/exec"; // ← ЗАМІНИ!!!
+    const PASSWORD = "6147"; // ← Зміни на свій 4-значний пароль
+
     const checkinPeriods = ["05/06-14/06","12/06-21/06","19/06-28/06","26/06-05/07","03/07-12/07","10/07-19/07","17/07-26/07","24/07-02/08","31/07-09/08","07/08-16/08","14/08-23/08","21/08-30/08","28/08-06/09","04/09-13/09","11/09-20/09","18/09-27/09"];
     
     let database = {};
     let currentPeriod = "";
+    let isAuthenticated = false;
 
-  const hotelStructure = {
+    // Структура готелю (скопіюй повністю з попередньої версії)
+    const hotelStructure = {
       konstantin: {
         floors: {
           1: [
@@ -132,7 +157,21 @@
         }
       }
     };
-    // ================== ОСНОВНІ ФУНКЦІЇ ==================
+
+    // ================== ПАРОЛЬ ==================
+    function checkPassword() {
+      const input = document.getElementById('passwordInput').value;
+      if (input === PASSWORD) {
+        isAuthenticated = true;
+        document.getElementById('passwordModal').classList.add('hidden');
+        initSystem();
+      } else {
+        alert("❌ Неправильний пароль!");
+        document.getElementById('passwordInput').value = '';
+      }
+    }
+
+    // ================== ЗАВАНТАЖЕННЯ ДАНИХ ==================
     async function loadBookingsFromSheet(period) {
       try {
         const response = await fetch(WEB_APP_URL, {
@@ -141,13 +180,9 @@
           body: JSON.stringify({ action: "getBookings", period: period })
         });
         const result = await response.json();
-        
-        if (result.success) {
-          database[period] = result.bookings || [];
-        }
+        if (result.success) database[period] = result.bookings || [];
       } catch (error) {
-        console.error("Помилка завантаження даних:", error);
-        alert("Не вдалося завантажити дані з сервера");
+        console.error("Помилка завантаження:", error);
       }
     }
 
@@ -162,9 +197,8 @@
                     <div class="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-6 gap-8">`;
 
         rooms.forEach(room => {
-          const dbRoom = database[currentPeriod] ? database[currentPeriod].find(r => r.number === room.number) : null;
+          const dbRoom = database[currentPeriod]?.find(r => r.number === room.number);
           const isBooked = dbRoom && dbRoom.booked;
-
           const seaIcon = room.sea ? '<span class="wave">🌊</span> ' : '';
 
           html += `
@@ -172,7 +206,7 @@
                  class="room p-4 rounded-2xl cursor-pointer shadow text-center ${isBooked ? 'booked' : 'free'}">
               <div class="text-2xl font-bold">${room.number}</div>
               <div class="text-xs mt-1">${seaIcon}${room.type}</div>
-              ${isBooked ? `<div class="text-sm mt-2 font-bold bg-white/30 py-1 rounded">№${dbRoom.guests.requestNum}</div>` : ''}
+              ${isBooked ? `<div class="request-num">№${dbRoom.guests.requestNum}</div>` : ''}
             </div>`;
         });
         html += `</div>`;
@@ -185,37 +219,35 @@
       const statusEl = document.getElementById('periodStatus');
       
       const isLocked = isPeriodLocked(currentPeriod);
-      statusEl.textContent = isLocked 
-        ? "⚠️ Заїзд триває або завершився — зміни заблоковані" 
-        : "✅ Можна бронювати";
-      statusEl.className = isLocked 
-        ? "bg-red-100 text-red-700 p-4 rounded-2xl" 
-        : "bg-green-100 text-green-700 p-4 rounded-2xl";
+      statusEl.textContent = isLocked ? "⚠️ Заїзд триває або завершився — зміни заблоковані" : "✅ Можна бронювати";
+      statusEl.className = isLocked ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700";
 
       await loadBookingsFromSheet(currentPeriod);
       loadRooms();
     }
 
+    // ================== БРОНЮВАННЯ ТА ДІЇ ==================
     function handleRoomClick(roomNum) {
-      if (isPeriodLocked(currentPeriod)) return alert("Бронювання заблоковано");
+      if (!isAuthenticated || isPeriodLocked(currentPeriod)) {
+        return alert("Дія заблокована");
+      }
 
-      const dbRoom = database[currentPeriod] ? database[currentPeriod].find(r => r.number === roomNum) : null;
-
+      const dbRoom = database[currentPeriod]?.find(r => r.number === roomNum);
       if (dbRoom && dbRoom.booked) {
         if (confirm(`Кімната ${roomNum} заброньована заявкою №${dbRoom.guests.requestNum}\n\nЩо зробити?`)) {
-          const action = prompt("1 - Відмінити бронювання\n2 - Перенести в іншу кімнату\nВведіть цифру:");
+          const action = prompt("1 - Відмінити\n2 - Перенести\nВведіть цифру:");
           if (action === "1") cancelBooking(roomNum);
           if (action === "2") moveBooking(roomNum);
         }
         return;
       }
 
-      // Нове бронювання
       document.getElementById('modalRoomNumber').textContent = roomNum;
       document.getElementById('bookingModal').classList.remove('hidden');
     }
 
     async function confirmBooking() {
+      // ... (валідація номеру заявки та місткості — без змін) ...
       const requestNum = document.getElementById('requestNum').value.trim();
       const adults = parseInt(document.getElementById('adults').value) || 0;
       const kids612 = parseInt(document.getElementById('kids612').value) || 0;
@@ -225,106 +257,76 @@
 
       if (!requestNum || requestNum.length < 4) return alert("Введіть номер заявки (4-5 цифр)");
 
-      // Перевірка місткості
       let maxCapacity = 4;
       Object.values(hotelStructure.konstantin.floors).forEach(floor => {
         const room = floor.find(r => r.number === roomNum);
         if (room) maxCapacity = room.maxGuests || 4;
       });
-      if (total > maxCapacity) {
-        return alert(`Недостатньо місць! У кімнаті ${roomNum} максимум ${maxCapacity} особи.`);
-      }
+      if (total > maxCapacity) return alert(`Недостатньо місць! Максимум ${maxCapacity} осіб.`);
 
-      const bookingData = {
-        action: "book",
-        period: currentPeriod,
-        room: roomNum,
-        requestId: requestNum,
-        adults: adults,
-        kids612: kids612,
-        kidsUnder6: kidsUnder6,
-        total: total
-      };
+      const bookingData = { action: "book", period: currentPeriod, room: roomNum, requestId: requestNum, adults, kids612, kidsUnder6, total };
 
       try {
-        const response = await fetch(WEB_APP_URL, {
-          method: "POST",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify(bookingData)
-        });
-
-        const result = await response.json();
-
+        const res = await fetch(WEB_APP_URL, { method: "POST", headers: {"Content-Type": "text/plain;charset=utf-8"}, body: JSON.stringify(bookingData) });
+        const result = await res.json();
         if (result.success) {
-          alert("✅ Кімната успішно заброньована!");
+          alert("✅ Заброньовано!");
           closeModal();
-          await loadBookingsFromSheet(currentPeriod); // оновлюємо дані
-          loadRooms();
+          await loadData();   // ← оновлення
         } else {
-          alert("❌ " + (result.message || "Помилка бронювання"));
+          alert(result.message || "Помилка");
         }
-      } catch (error) {
-        alert("Помилка підключення до сервера!");
-        console.error(error);
-      }
+      } catch (e) { alert("Помилка сервера"); }
     }
 
     async function cancelBooking(roomNum) {
-      if (!confirm(`Відмінити бронювання кімнати ${roomNum}?`)) return;
-
+      if (!confirm(`Відмінити бронювання ${roomNum}?`)) return;
       try {
-        const response = await fetch(WEB_APP_URL, {
+        const res = await fetch(WEB_APP_URL, {
           method: "POST",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify({
-            action: "cancel",
-            period: currentPeriod,
-            room: roomNum
-          })
+          headers: {"Content-Type": "text/plain;charset=utf-8"},
+          body: JSON.stringify({action: "cancel", period: currentPeriod, room: roomNum})
         });
-
-        const result = await response.json();
-        if (result.success) {
-          alert("✅ Бронювання скасовано");
-          await loadBookingsFromSheet(currentPeriod);
-          loadRooms();
-        } else {
-          alert("Не вдалося скасувати");
-        }
-      } catch (e) {
-        alert("Помилка підключення");
-      }
+        const result = await res.json();
+        if (result.success) await loadData();
+      } catch (e) {}
     }
 
     async function moveBooking(oldRoomNum) {
-      const newRoomNumInput = prompt(`Введіть номер нової кімнати (поточна: ${oldRoomNum}):`);
-      const newRoomNum = parseInt(newRoomNumInput);
+      const dbRoom = database[currentPeriod].find(r => r.number === oldRoomNum);
+      const totalGuests = dbRoom.guests.total;
+
+      const newRoomInput = prompt(`Перенести заявку №${dbRoom.guests.requestNum} (${totalGuests} чол.) в кімнату:`);
+      const newRoomNum = parseInt(newRoomInput);
       if (!newRoomNum) return;
 
+      // Перевірка місткості нової кімнати
+      let newMax = 4;
+      Object.values(hotelStructure.konstantin.floors).forEach(floor => {
+        const r = floor.find(room => room.number === newRoomNum);
+        if (r) newMax = r.maxGuests || 4;
+      });
+
+      if (totalGuests > newMax) {
+        return alert(`❌ Неможливо! Заявка на ${totalGuests} осіб, а в кімнаті ${newRoomNum} максимум ${newMax}.`);
+      }
+
       try {
-        const response = await fetch(WEB_APP_URL, {
+        const res = await fetch(WEB_APP_URL, {
           method: "POST",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          headers: {"Content-Type": "text/plain;charset=utf-8"},
           body: JSON.stringify({
             action: "move",
             period: currentPeriod,
             oldRoom: oldRoomNum,
             newRoom: newRoomNum,
-            requestId: database[currentPeriod].find(r => r.number === oldRoomNum).guests.requestNum
+            requestId: dbRoom.guests.requestNum
           })
         });
-
-        const result = await response.json();
-        if (result.success) {
-          alert(`✅ Заявка перенесена в кімнату ${newRoomNum}`);
-          await loadBookingsFromSheet(currentPeriod);
-          loadRooms();
-        } else {
-          alert(result.message || "Не вдалося перенести");
-        }
-      } catch (e) {
-        alert("Помилка підключення");
-      }
+        const result = await res.json();
+        if (result.success) await loadData();
+        else alert(result.message || "Не вдалося перенести");
+      } catch (e) { alert("Помилка сервера"); }
     }
 
     function closeModal() {
@@ -342,11 +344,21 @@
       select.innerHTML = checkinPeriods.map(p => `<option value="${p}">${p} 2026</option>`).join('');
     }
 
-    window.onload = async () => {
+    async function initSystem() {
       document.getElementById('currentDate').textContent = `Сьогодні: ${new Date().toLocaleDateString('uk-UA')}`;
       populatePeriods();
       document.getElementById('checkin').value = checkinPeriods[3];
       await loadData();
+    }
+
+    // Запуск
+    window.onload = () => {
+      const savedPass = localStorage.getItem('bookingPassword');
+      if (savedPass === PASSWORD) {
+        isAuthenticated = true;
+        document.getElementById('passwordModal').classList.add('hidden');
+        initSystem();
+      }
     };
   </script>
 </body>
