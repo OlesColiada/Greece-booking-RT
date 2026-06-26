@@ -229,33 +229,65 @@ async function loadData() {
     }
 
     async function confirmBooking() {
-      const requestNum = document.getElementById('requestNum').value.trim();
-      const roomNum = parseInt(document.getElementById('modalRoomNumber').textContent);
+  const requestNum = document.getElementById('requestNum').value.trim();
+  const adults = parseInt(document.getElementById('adults').value) || 0;
+  const kids612 = parseInt(document.getElementById('kids612').value) || 0;
+  const kidsUnder6 = parseInt(document.getElementById('kidsUnder6').value) || 0;
+  const total = adults + kids612 + kidsUnder6;
+  const roomNum = parseInt(document.getElementById('modalRoomNumber').textContent);
 
-      if (!requestNum || requestNum.length < 4) return alert("Введіть номер заявки (4-5 цифр)");
+  if (!requestNum || requestNum.length < 4) {
+    return alert("Введіть номер заявки (4-5 цифр)");
+  }
 
-      const bookingData = {
-        action: "book",
-        period: currentPeriod,
-        room: roomNum,
-        requestId: requestNum,
-        adults: 2, kids612: 0, kidsUnder6: 0, total: 2
-      };
+  // Перевірка місткості кімнати
+  let maxCapacity = 4;
+  Object.values(hotelStructure.konstantin.floors).forEach(floor => {
+    const room = floor.find(r => r.number === roomNum);
+    if (room) maxCapacity = room.maxGuests || 4;
+  });
 
-      try {
-        await fetch(WEB_APP_URL, {
-          method: "POST",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify(bookingData)
-        });
+  if (total > maxCapacity) {
+    return alert(`Недостатньо місць! У кімнаті ${roomNum} максимум ${maxCapacity} осіб.`);
+  }
 
-        alert("✅ Кімната заброньована!");
-        closeModal();
-        await loadData();
-      } catch (e) {
-        alert("Помилка підключення");
-      }
+  const bookingData = {
+    action: "book",
+    period: currentPeriod,
+    room: roomNum,
+    requestId: requestNum,
+    adults: adults,
+    kids612: kids612,
+    kidsUnder6: kidsUnder6,
+    total: total
+  };
+
+  try {
+    const response = await fetch(WEB_APP_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(bookingData)
+    });
+
+    const result = await response.json();
+
+    if (result.success || result.status === "success") {
+      alert("✅ Кімната успішно заброньована!");
+      closeModal();
+      
+      // Сильне оновлення інтерфейсу
+      await loadBookingsFromSheet(currentPeriod);
+      loadRooms();
+      setTimeout(() => loadData(), 700);
+      
+    } else {
+      alert("❌ " + (result.message || "Помилка бронювання"));
     }
+  } catch (error) {
+    console.error("Помилка:", error);
+    alert("Помилка підключення до сервера");
+  }
+}
 
     async function cancelBooking(roomNum) {
       if (!confirm(`Відмінити бронювання ${roomNum}?`)) return;
