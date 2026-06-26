@@ -158,19 +158,6 @@
       }
     };
 
-    // ================== ПАРОЛЬ ==================
-    function checkPassword() {
-      const input = document.getElementById('passwordInput').value;
-      if (input === PASSWORD) {
-        isAuthenticated = true;
-        document.getElementById('passwordModal').classList.add('hidden');
-        initSystem();
-      } else {
-        alert("❌ Неправильний пароль!");
-        document.getElementById('passwordInput').value = '';
-      }
-    }
-
     // ================== ЗАВАНТАЖЕННЯ ДАНИХ ==================
     async function loadBookingsFromSheet(period) {
   try {
