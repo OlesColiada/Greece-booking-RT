@@ -146,7 +146,7 @@
       return new Date() >= new Date(2026, m-1, d);
     }
 
-  async function loadRooms() {
+   async function loadRooms() {
      // 1. Отримуємо дані з Google Таблиці (асинхронно)
      try {
        const response = await fetch("https://script.google.com/macros/s/AKfycbyDDyNqQtcycmAEl_LwdwBK63vHpE2ASPw8CEkgaP2fobErztYX9h4jms0eot8k9ysX/exec", {
