@@ -37,7 +37,6 @@
       </div>
 
       <div id="periodStatus" class="mb-6 p-4 text-center text-lg font-medium rounded-2xl"></div>
-
       <div id="roomsGrid" class="space-y-10"></div>
     </div>
   </div>
@@ -67,6 +66,7 @@
     const checkinPeriods = ["05/06-14/06","12/06-21/06","19/06-28/06","26/06-05/07","03/07-12/07","10/07-19/07","17/07-26/07","24/07-02/08","31/07-09/08","07/08-16/08","14/08-23/08","21/08-30/08","28/08-06/09","04/09-13/09","11/09-20/09","18/09-27/09"];
     let database = {};
     let currentPeriod = "";
+    const API_URL = "https://script.google.com/macros/s/AKfycbyDDyNqQtcycmAEl_LwdwBK63vHpE2ASPw8CEkgaP2fobErztYX9h4jms0eot8k9ysX/exec";
 
     const hotelStructure = {
       konstantin: {
@@ -91,7 +91,7 @@
 
     async function loadRooms() {
       try {
-        const response = await fetch("https://script.google.com/macros/s/AKfycbyDDyNqQtcycmAEl_LwdwBK63vHpE2ASPw8CEkgaP2fobErztYX9h4jms0eot8k9ysX/exec", { method: "GET", mode: "cors" });
+        const response = await fetch(API_URL, { method: "GET", mode: "cors" });
         const allData = await response.json();
         database = {};
         for (let i = 1; i < allData.length; i++) {
@@ -125,19 +125,53 @@
       });
     }
 
+    function handleRoomClick(roomNum) {
+      if (isPeriodLocked(currentPeriod)) return alert("Бронювання заблоковано");
+      const dbRoom = database[currentPeriod] ? database[currentPeriod].find(r => r.number === roomNum) : null;
+      if (dbRoom && dbRoom.booked) {
+        if (confirm(`Кімната ${roomNum} заброньована заявкою №${dbRoom.guests.requestNum}\n\nЩо зробити?`)) {
+          const action = prompt("1 - Відмінити бронювання\n2 - Перенести в іншу кімнату\nВведіть цифру:");
+          if (action === "1") cancelBooking(roomNum);
+          if (action === "2") moveBooking(roomNum);
+        }
+        return;
+      }
+      document.getElementById('modalRoomNumber').textContent = roomNum;
+      document.getElementById('bookingModal').classList.remove('hidden');
+    }
+
     async function confirmBooking() {
-      const bookingData = { action: "book", period: currentPeriod, room: parseInt(document.getElementById('modalRoomNumber').textContent), requestId: document.getElementById('requestNum').value.trim(), adults: parseInt(document.getElementById('adults').value), kids612: parseInt(document.getElementById('kids612').value), kidsUnder6: parseInt(document.getElementById('kidsUnder6').value), total: parseInt(document.getElementById('adults').value) + parseInt(document.getElementById('kids612').value) + parseInt(document.getElementById('kidsUnder6').value) };
+      const requestNum = document.getElementById('requestNum').value.trim();
+      const adults = parseInt(document.getElementById('adults').value) || 0;
+      const kids612 = parseInt(document.getElementById('kids612').value) || 0;
+      const kidsUnder6 = parseInt(document.getElementById('kidsUnder6').value) || 0;
+      const total = adults + kids612 + kidsUnder6;
+      const roomNum = parseInt(document.getElementById('modalRoomNumber').textContent);
+      if (!requestNum || requestNum.length < 4) return alert("Введіть номер заявки (4-5 цифр)");
+      const bookingData = { action: "book", period: currentPeriod, room: roomNum, requestId: requestNum, adults: adults, kids612: kids612, kidsUnder6: kidsUnder6, total: total };
       try {
-        await fetch("https://script.google.com/macros/s/AKfycbyDDyNqQtcycmAEl_LwdwBK63vHpE2ASPw8CEkgaP2fobErztYX9h4jms0eot8k9ysX/exec", { method: "POST", mode: "cors", headers: { "Content-Type": "application/json" }, body: JSON.stringify(bookingData) });
+        await fetch(API_URL, { method: "POST", mode: "cors", headers: { "Content-Type": "application/json" }, body: JSON.stringify(bookingData) });
         alert("✅ Кімната заброньована!");
         closeModal();
         loadRooms();
-      } catch (err) { alert("Помилка підключення!"); }
+      } catch (e) { alert("Помилка підключення до сервера!"); }
     }
 
-    function handleRoomClick(roomNum) { if (isPeriodLocked(currentPeriod)) return alert("Бронювання заблоковано"); document.getElementById('modalRoomNumber').textContent = roomNum; document.getElementById('bookingModal').classList.remove('hidden'); }
+    function cancelBooking(roomNum) {
+      if (!confirm(`Відмінити бронювання кімнати ${roomNum}?`)) return;
+      const bookingData = { action: "cancel", period: currentPeriod, room: roomNum };
+      fetch(API_URL, { method: "POST", mode: "cors", body: JSON.stringify(bookingData) }).then(() => loadRooms());
+    }
+
+    function moveBooking(oldRoomNum) {
+      const newRoomNum = parseInt(prompt(`Введіть номер нової кімнати (поточна: ${oldRoomNum}):`));
+      if (!newRoomNum) return;
+      const bookingData = { action: "move", period: currentPeriod, oldRoom: oldRoomNum, newRoom: newRoomNum };
+      fetch(API_URL, { method: "POST", mode: "cors", body: JSON.stringify(bookingData) }).then(() => loadRooms());
+    }
+
     function closeModal() { document.getElementById('bookingModal').classList.add('hidden'); }
-    window.onload = () => { populatePeriods(); document.getElementById('checkin').value = checkinPeriods[3]; loadRooms(); };
+    window.onload = () => { document.getElementById('currentDate').textContent = `Сьогодні: ${new Date().toLocaleDateString('uk-UA')}`; populatePeriods(); document.getElementById('checkin').value = checkinPeriods[3]; loadRooms(); };
   </script>
 </body>
 </html>
