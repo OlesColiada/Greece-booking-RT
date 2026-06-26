@@ -141,20 +141,36 @@
     };
 
     async function loadBookingsFromSheet(period) {
-      try {
-        const response = await fetch(WEB_APP_URL, {
-          method: "POST",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify({ action: "getBookings", period: period })
-        });
-        const result = await response.json();
-        if (result.success) {
-          database[period] = result.bookings || [];
-        }
-      } catch (e) {
-        console.error(e);
-      }
+  try {
+    const response = await fetch(WEB_APP_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ action: "getBookings", period: period })
+    });
+    
+    const result = await response.json();
+    console.log("Отримані дані:", result);   // ← для перевірки
+    
+    if (result.success) {
+      database[period] = result.bookings || [];
+      console.log(`Завантажено ${database[period].length} бронювань`);
     }
+  } catch (e) {
+    console.error("Помилка завантаження:", e);
+  }
+}
+
+async function loadData() {
+  currentPeriod = document.getElementById('checkin').value;
+  
+  const statusEl = document.getElementById('periodStatus');
+  const isLocked = isPeriodLocked(currentPeriod);
+  statusEl.textContent = isLocked ? "⚠️ Заїзд триває або завершився — зміни заблоковані" : "✅ Можна бронювати";
+  statusEl.className = isLocked ? "bg-red-100 text-red-700 p-4 rounded-2xl" : "bg-green-100 text-green-700 p-4 rounded-2xl";
+
+  await loadBookingsFromSheet(currentPeriod);
+  loadRooms();           // важливо викликати після завантаження
+}
 
     function loadRooms() {
       const grid = document.getElementById('roomsGrid');
