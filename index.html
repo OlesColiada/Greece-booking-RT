@@ -78,7 +78,7 @@
   </div>
 
   <script>
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyDDyNqQtcycmAEl_LwdwBK63vHpE2ASPw8CEkgaP2fobErztYX9h4jms0eot8k9ysX/exec"; // ← заміни на новий URL після deploy
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyDDyNqQtcycmAEl_LwdwBK63vHpE2ASPw8CEkgaP2fobErztYX9h4jms0eot8k9ysX/exec"; // ← заміни!!!
 
     const checkinPeriods = ["05/06-14/06","12/06-21/06","19/06-28/06","26/06-05/07","03/07-12/07","10/07-19/07","17/07-26/07","24/07-02/08","31/07-09/08","07/08-16/08","14/08-23/08","21/08-30/08","28/08-06/09","04/09-13/09","11/09-20/09","18/09-27/09"];
     
@@ -140,37 +140,21 @@
       }
     };
 
- async function loadBookingsFromSheet(period) {
-  try {
-    const response = await fetch(WEB_APP_URL, {
-      method: "POST",
-      headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify({ action: "getBookings", period: period })
-    });
-    
-    const result = await response.json();
-    console.log("Отримані дані для", period, ":", result);
-    
-    if (result.success || result.status === "success") {
-      database[period] = result.bookings || [];
-      console.log(`✅ Завантажено ${database[period].length} бронювань`);
+    async function loadBookings(period) {
+      try {
+        const response = await fetch(WEB_APP_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ action: "getBookings", period: period })
+        });
+        const result = await response.json();
+        if (result.success) {
+          database[period] = result.bookings || [];
+        }
+      } catch (e) {
+        console.error(e);
+      }
     }
-  } catch (e) {
-    console.error("Помилка:", e);
-  }
-}
-
-async function loadData() {
-  currentPeriod = document.getElementById('checkin').value;
-  
-  const statusEl = document.getElementById('periodStatus');
-  const isLocked = isPeriodLocked(currentPeriod);
-  statusEl.textContent = isLocked ? "⚠️ Заїзд триває або завершився — зміни заблоковані" : "✅ Можна бронювати";
-  statusEl.className = isLocked ? "bg-red-100 text-red-700 p-4 rounded-2xl" : "bg-green-100 text-green-700 p-4 rounded-2xl";
-
-  await loadBookingsFromSheet(currentPeriod);
-  loadRooms();           // важливо викликати після завантаження
-}
 
     function loadRooms() {
       const grid = document.getElementById('roomsGrid');
@@ -203,11 +187,12 @@ async function loadData() {
     async function loadData() {
       currentPeriod = document.getElementById('checkin').value;
       const statusEl = document.getElementById('periodStatus');
+      
       const isLocked = isPeriodLocked(currentPeriod);
       statusEl.textContent = isLocked ? "⚠️ Заїзд триває або завершився — зміни заблоковані" : "✅ Можна бронювати";
       statusEl.className = isLocked ? "bg-red-100 text-red-700 p-4 rounded-2xl" : "bg-green-100 text-green-700 p-4 rounded-2xl";
 
-      await loadBookingsFromSheet(currentPeriod);
+      await loadBookings(currentPeriod);
       loadRooms();
     }
 
@@ -229,38 +214,32 @@ async function loadData() {
     }
 
     async function confirmBooking() {
-  const requestNum = document.getElementById('requestNum').value.trim();
-  const roomNum = parseInt(document.getElementById('modalRoomNumber').textContent);
+      const requestNum = document.getElementById('requestNum').value.trim();
+      const roomNum = parseInt(document.getElementById('modalRoomNumber').textContent);
 
-  if (!requestNum || requestNum.length < 4) 
-    return alert("Введіть номер заявки (4-5 цифр)");
+      if (!requestNum || requestNum.length < 4) return alert("Введіть номер заявки (4-5 цифр)");
 
-  const bookingData = {
-    action: "book",
-    period: currentPeriod,
-    room: roomNum,
-    requestId: requestNum
-  };
+      const bookingData = {
+        action: "book",
+        period: currentPeriod,
+        room: roomNum,
+        requestId: requestNum
+      };
 
-  try {
-    await fetch(WEB_APP_URL, {
-      method: "POST",
-      headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify(bookingData)
-    });
+      try {
+        await fetch(WEB_APP_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(bookingData)
+        });
 
-    alert("✅ Кімната заброньована!");
-    closeModal();
-    
-    // ФІНАЛЬНИЙ ВАРІАНТ — перезавантажуємо сторінку
-    setTimeout(() => {
-      location.reload();
-    }, 600);
-
-  } catch (error) {
-    alert("Помилка підключення");
-  }
-}
+        alert("✅ Кімната заброньована!");
+        closeModal();
+        await loadData();        // оновлюємо дані
+      } catch (e) {
+        alert("Помилка підключення");
+      }
+    }
 
     async function cancelBooking(roomNum) {
       if (!confirm(`Відмінити бронювання ${roomNum}?`)) return;
@@ -273,7 +252,7 @@ async function loadData() {
     }
 
     async function moveBooking(oldRoomNum) {
-      const newRoomNum = parseInt(prompt(`Нова кімната для ${oldRoomNum}:`));
+      const newRoomNum = parseInt(prompt(`Введіть номер нової кімнати (поточна: ${oldRoomNum}):`));
       if (!newRoomNum) return;
       await fetch(WEB_APP_URL, {
         method: "POST",
