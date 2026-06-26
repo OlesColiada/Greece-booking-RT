@@ -79,14 +79,13 @@
 
   <script>
     // ================== НАЛАШТУВАННЯ ==================
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyDDyNqQtcycmAEl_LwdwBK63vHpE2ASPw8CEkgaP2fobErztYX9h4jms0eot8k9ysX/exec"; // ← ЗАМІНИ НА СВІЙ!
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyDDyNqQtcycmAEl_LwdwBK63vHpE2ASPw8CEkgaP2fobErztYX9h4jms0eot8k9ysX/exec"; // ← ОБОВ'ЯЗКОВО ЗАМІНИ!
 
     const checkinPeriods = ["05/06-14/06","12/06-21/06","19/06-28/06","26/06-05/07","03/07-12/07","10/07-19/07","17/07-26/07","24/07-02/08","31/07-09/08","07/08-16/08","14/08-23/08","21/08-30/08","28/08-06/09","04/09-13/09","11/09-20/09","18/09-27/09"];
     
     let database = {};
     let currentPeriod = "";
 
-    // Структура готелю (встав сюди повністю!)
     const hotelStructure = {
       konstantin: {
         floors: {
@@ -103,45 +102,46 @@
             {number: 110, type: "односпальне односпальне", maxGuests: 2},
             {number: 111, type: "односпальне односпальне односпальне", maxGuests: 3},
             {number: 112, type: "двоспальне односпальне", maxGuests: 3},
-			{number: 113, type: "односпальне односпальне", maxGuests: 2},
-			{number: 114, type: "односпальне односпальне", maxGuests: 2}
+            {number: 113, type: "односпальне односпальне", maxGuests: 2},
+            {number: 114, type: "односпальне односпальне", maxGuests: 2}
           ],
           2: [
-            {number: 201, type: "односпальне односпальне", maxGuests: 2}, 
-            {number: 202, type: "односпальне односпальне", maxGuests: 2}, 
+            {number: 201, type: "односпальне односпальне", maxGuests: 2},
+            {number: 202, type: "односпальне односпальне", maxGuests: 2},
             {number: 203, type: "односпальне односпальне", maxGuests: 2},
-            {number: 204, type: "односпальне односпальне односпальне", sea: true, maxGuests: 3}, 
+            {number: 204, type: "односпальне односпальне односпальне", sea: true, maxGuests: 3},
             {number: 205, type: "односпальне односпальне односпальне", sea: true, maxGuests: 3},
-            {number: 206, type: "односпальне односпальне + extra bed", maxGuests: 3}, 
+            {number: 206, type: "односпальне односпальне + extra bed", maxGuests: 3},
             {number: 207, type: "односпальне односпальне + extra bed", maxGuests: 3},
-            {number: 208, type: "односпальне односпальне", maxGuests: 2}, 
-            {number: 209, type: "односпальне односпальне", maxGuests: 2}, 
+            {number: 208, type: "односпальне односпальне", maxGuests: 2},
+            {number: 209, type: "односпальне односпальне", maxGuests: 2},
             {number: 210, type: "односпальне односпальне", maxGuests: 2},
-            {number: 211, type: "двоспальне односпальне + extra bed", maxGuests: 3}, 
+            {number: 211, type: "двоспальне односпальне + extra bed", maxGuests: 3},
             {number: 212, type: "двоспальне односпальне + extra bed ", maxGuests: 3},
-            {number: 213, type: "односпальне односпальне", maxGuests: 2}, 
+            {number: 213, type: "односпальне односпальне", maxGuests: 2},
             {number: 214, type: "односпальне односпальне", maxGuests: 2}
           ],
           3: [
-            {number: 301, type: "односпальне односпальне", maxGuests: 2}, 
-            {number: 302, type: "односпальне односпальне + extra bed", maxGuests: 3}, 
-            {number: 303, type: "односпальне односпальне + extra bed", maxGuests: 3}, 
+            {number: 301, type: "односпальне односпальне", maxGuests: 2},
+            {number: 302, type: "односпальне односпальне + extra bed", maxGuests: 3},
+            {number: 303, type: "односпальне односпальне + extra bed", maxGuests: 3},
             {number: 304, type: "двоспальне односпальне", sea: true, maxGuests: 3},
-            {number: 305, type: "односпальне односпальне односпальне", sea: true, maxGuests: 3}, 
+            {number: 305, type: "односпальне односпальне односпальне", sea: true, maxGuests: 3},
             {number: 306, type: "односпальне односпальне", maxGuests: 2},
-            {number: 307, type: "односпальне односпальне", maxGuests: 2}, 
-            {number: 308, type: "односпальне односпальне", maxGuests: 2}, 
+            {number: 307, type: "односпальне односпальне", maxGuests: 2},
+            {number: 308, type: "односпальне односпальне", maxGuests: 2},
             {number: 309, type: "односпальне односпальне", maxGuests: 2},
-            {number: 310, type: "односпальне односпальне", maxGuests: 2}, 
-            {number: 311, type: "двоспальне односпальне", maxGuests: 3}, 
-            {number: 312, type: "двоспальне односпальне", maxGuests: 3}, 
+            {number: 310, type: "односпальне односпальне", maxGuests: 2},
+            {number: 311, type: "двоспальне односпальне", maxGuests: 3},
+            {number: 312, type: "двоспальне односпальне", maxGuests: 3},
             {number: 313, type: "односпальне односпальне", maxGuests: 2},
             {number: 314, type: "двоспальне (без спинки) + extra bed", maxGuests: 3}
           ]
         }
       }
     };
-    // ================== ЗАВАНТАЖЕННЯ ДАНИХ ==================
+
+    // ================== ЗАВАНТАЖЕННЯ ТА ОНОВЛЕННЯ ==================
     async function loadBookingsFromSheet(period) {
       try {
         const response = await fetch(WEB_APP_URL, {
@@ -149,15 +149,13 @@
           headers: { "Content-Type": "text/plain;charset=utf-8" },
           body: JSON.stringify({ action: "getBookings", period: period })
         });
-
         const text = await response.text();
-        let result = JSON.parse(text);
-
+        const result = JSON.parse(text);
         if (result.success) {
           database[period] = result.bookings || [];
         }
       } catch (error) {
-        console.error("Помилка завантаження бронювань:", error);
+        console.error("Помилка завантаження:", error);
       }
     }
 
@@ -194,18 +192,14 @@
       const statusEl = document.getElementById('periodStatus');
       
       const isLocked = isPeriodLocked(currentPeriod);
-      statusEl.textContent = isLocked 
-        ? "⚠️ Заїзд триває або завершився — зміни заблоковані" 
-        : "✅ Можна бронювати";
-      statusEl.className = isLocked 
-        ? "bg-red-100 text-red-700 p-4 rounded-2xl" 
-        : "bg-green-100 text-green-700 p-4 rounded-2xl";
+      statusEl.textContent = isLocked ? "⚠️ Заїзд триває або завершився — зміни заблоковані" : "✅ Можна бронювати";
+      statusEl.className = isLocked ? "bg-red-100 text-red-700 p-4 rounded-2xl" : "bg-green-100 text-green-700 p-4 rounded-2xl";
 
       await loadBookingsFromSheet(currentPeriod);
       loadRooms();
     }
 
-    // ================== ОСНОВНІ ДІЇ ==================
+    // ================== ДІЇ З КІМНАТАМИ ==================
     function handleRoomClick(roomNum) {
       if (isPeriodLocked(currentPeriod)) return alert("Бронювання заблоковано");
 
@@ -223,8 +217,99 @@
       document.getElementById('bookingModal').classList.remove('hidden');
     }
 
-    // confirmBooking, cancelBooking, moveBooking — залишай ті, що були в попередній версії
-    // (можу надати їх окремо, якщо треба)
+    async function confirmBooking() {
+      const requestNum = document.getElementById('requestNum').value.trim();
+      const adults = parseInt(document.getElementById('adults').value) || 0;
+      const kids612 = parseInt(document.getElementById('kids612').value) || 0;
+      const kidsUnder6 = parseInt(document.getElementById('kidsUnder6').value) || 0;
+      const total = adults + kids612 + kidsUnder6;
+      const roomNum = parseInt(document.getElementById('modalRoomNumber').textContent);
+
+      if (!requestNum || requestNum.length < 4) return alert("Введіть номер заявки (4-5 цифр)");
+
+      let maxCapacity = 4;
+      Object.values(hotelStructure.konstantin.floors).forEach(floor => {
+        const room = floor.find(r => r.number === roomNum);
+        if (room) maxCapacity = room.maxGuests || 4;
+      });
+      if (total > maxCapacity) return alert(`Недостатньо місць! Максимум ${maxCapacity} осіб.`);
+
+      const bookingData = {
+        action: "book",
+        period: currentPeriod,
+        room: roomNum,
+        requestId: requestNum,
+        adults, kids612, kidsUnder6, total
+      };
+
+      try {
+        const response = await fetch(WEB_APP_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(bookingData)
+        });
+
+        const text = await response.text();
+        const result = JSON.parse(text);
+
+        if (result.success === true || result.status === "success") {
+          alert("✅ Кімната успішно заброньована!");
+          closeModal();
+          await loadData();        // Повне оновлення
+        } else {
+          alert("❌ " + (result.message || "Помилка бронювання"));
+        }
+      } catch (error) {
+        console.error(error);
+        alert("Помилка підключення до сервера");
+      }
+    }
+
+    async function cancelBooking(roomNum) {
+      if (!confirm(`Відмінити бронювання кімнати ${roomNum}?`)) return;
+      try {
+        const response = await fetch(WEB_APP_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ action: "cancel", period: currentPeriod, room: roomNum })
+        });
+        await loadData();
+      } catch (e) { alert("Помилка скасування"); }
+    }
+
+    async function moveBooking(oldRoomNum) {
+      const dbRoom = database[currentPeriod].find(r => r.number === oldRoomNum);
+      const totalGuests = dbRoom.guests.total;
+
+      const newRoomInput = prompt(`Перенести заявку №${dbRoom.guests.requestNum} (${totalGuests} чол.) в кімнату:`);
+      const newRoomNum = parseInt(newRoomInput);
+      if (!newRoomNum) return;
+
+      let newMax = 4;
+      Object.values(hotelStructure.konstantin.floors).forEach(floor => {
+        const r = floor.find(room => room.number === newRoomNum);
+        if (r) newMax = r.maxGuests || 4;
+      });
+
+      if (totalGuests > newMax) {
+        return alert(`❌ Неможливо! Заявка на ${totalGuests} осіб, а в кімнаті ${newRoomNum} максимум ${newMax}.`);
+      }
+
+      try {
+        const response = await fetch(WEB_APP_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({
+            action: "move",
+            period: currentPeriod,
+            oldRoom: oldRoomNum,
+            newRoom: newRoomNum,
+            requestId: dbRoom.guests.requestNum
+          })
+        });
+        await loadData();
+      } catch (e) { alert("Помилка перенесення"); }
+    }
 
     function closeModal() {
       document.getElementById('bookingModal').classList.add('hidden');
