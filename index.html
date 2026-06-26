@@ -239,56 +239,43 @@ async function loadData() {
   const total = adults + kids612 + kidsUnder6;
   const roomNum = parseInt(document.getElementById('modalRoomNumber').textContent);
 
-  if (!requestNum || requestNum.length < 4) {
+  if (!requestNum || requestNum.length < 4) 
     return alert("Введіть номер заявки (4-5 цифр)");
-  }
 
-  // Перевірка місткості кімнати
   let maxCapacity = 4;
   Object.values(hotelStructure.konstantin.floors).forEach(floor => {
     const room = floor.find(r => r.number === roomNum);
     if (room) maxCapacity = room.maxGuests || 4;
   });
-
-  if (total > maxCapacity) {
-    return alert(`Недостатньо місць! У кімнаті ${roomNum} максимум ${maxCapacity} осіб.`);
-  }
+  if (total > maxCapacity) 
+    return alert(`Недостатньо місць! Максимум ${maxCapacity} осіб.`);
 
   const bookingData = {
     action: "book",
     period: currentPeriod,
     room: roomNum,
     requestId: requestNum,
-    adults: adults,
-    kids612: kids612,
-    kidsUnder6: kidsUnder6,
-    total: total
+    adults, kids612, kidsUnder6, total
   };
 
   try {
-    const response = await fetch(WEB_APP_URL, {
+    await fetch(WEB_APP_URL, {
       method: "POST",
       headers: { "Content-Type": "text/plain;charset=utf-8" },
       body: JSON.stringify(bookingData)
     });
 
-    const result = await response.json();
-
-    if (result.success || result.status === "success") {
-      alert("✅ Кімната успішно заброньована!");
-      closeModal();
-      
-      // Сильне оновлення інтерфейсу
-      await loadBookingsFromSheet(currentPeriod);
-      loadRooms();
-      setTimeout(() => loadData(), 700);
-      
-    } else {
-      alert("❌ " + (result.message || "Помилка бронювання"));
-    }
+    alert("✅ Кімната заброньована!");
+    closeModal();
+    
+    // Потрійне оновлення
+    await loadBookingsFromSheet(currentPeriod);
+    loadRooms();
+    setTimeout(() => loadData(), 800);
+    
   } catch (error) {
-    console.error("Помилка:", error);
-    alert("Помилка підключення до сервера");
+    console.error(error);
+    alert("Помилка підключення");
   }
 }
 
