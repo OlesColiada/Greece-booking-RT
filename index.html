@@ -309,14 +309,16 @@ async function confirmBooking() {
     if (isSuccess) {
       alert("✅ Кімната успішно заброньована!");
       closeModal();
-      await loadData();
+      
+      // Примусове оновлення
+      await loadBookingsFromSheet(currentPeriod);
+      loadRooms();
+      
+      // Додаткове повне оновлення
+      setTimeout(() => loadData(), 800);
     } else {
       alert("❌ " + (result.message || "Помилка бронювання"));
     }
-  } catch (error) {
-    console.error(error);
-    alert("Помилка підключення до сервера");
-  }
 }
 
     async function cancelBooking(roomNum) {
