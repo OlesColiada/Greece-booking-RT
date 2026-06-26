@@ -149,11 +149,14 @@
     });
     
     const result = await response.json();
-    console.log("Отримані дані:", result);   // ← для перевірки
+    console.log("Отримані дані:", result);
     
-    if (result.success) {
+    // Виправлення для твого сервера
+    if (result.success || result.status === "success") {
       database[period] = result.bookings || [];
-      console.log(`Завантажено ${database[period].length} бронювань`);
+      console.log(`✅ Завантажено ${database[period].length} бронювань для ${period}`);
+    } else {
+      console.warn("Сервер повернув помилку:", result);
     }
   } catch (e) {
     console.error("Помилка завантаження:", e);
