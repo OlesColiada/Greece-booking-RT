@@ -7,13 +7,23 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <style>
-    .room { transition: all 0.2s; min-width: 140px; position: relative; }
+    .room {
+      transition: all 0.2s;
+      min-width: 140px;
+      position: relative;
+    }
     .room.free { background-color: #10b981; color: white; }
     .room.booked { background-color: #ef4444; color: white; }
     .room:hover { transform: scale(1.05); }
     .wave { color: #3b82f6; font-size: 1.2rem; }
-    .floor-header { background: linear-gradient(90deg, #1e3a8a, #3b82f6); color: white; }
-    .group-border { border: 3px solid #f59e0b; box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.3); }
+    .floor-header {
+      background: linear-gradient(90deg, #1e3a8a, #3b82f6);
+      color: white;
+    }
+    .group-border {
+      border: 3px solid #f59e0b;
+      box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.3);
+    }
   </style>
 </head>
 <body class="bg-gray-100">
@@ -37,10 +47,12 @@
       </div>
 
       <div id="periodStatus" class="mb-6 p-4 text-center text-lg font-medium rounded-2xl"></div>
+
       <div id="roomsGrid" class="space-y-10"></div>
     </div>
   </div>
 
+  <!-- Модальне вікно -->
   <div id="bookingModal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center">
     <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full mx-4 p-8">
       <h2 class="text-2xl font-bold mb-6">Бронювання кімнати <span id="modalRoomNumber" class="text-blue-600"></span></h2>
@@ -64,16 +76,61 @@
 
   <script>
     const checkinPeriods = ["05/06-14/06","12/06-21/06","19/06-28/06","26/06-05/07","03/07-12/07","10/07-19/07","17/07-26/07","24/07-02/08","31/07-09/08","07/08-16/08","14/08-23/08","21/08-30/08","28/08-06/09","04/09-13/09","11/09-20/09","18/09-27/09"];
+
     let database = {};
     let currentPeriod = "";
-    const API_URL = "https://script.google.com/macros/s/AKfycbyDDyNqQtcycmAEl_LwdwBK63vHpE2ASPw8CEkgaP2fobErztYX9h4jms0eot8k9ysX/exec";
 
     const hotelStructure = {
       konstantin: {
         floors: {
-          1: [{number: 101, type: "односпальне односпальне", maxGuests: 2}, {number: 102, type: "односпальне односпальне", maxGuests: 2}, {number: 103, type: "односпальне односпальне", maxGuests: 2}, {number: 104, type: "двоспальне односпальне", sea: true, maxGuests: 3}, {number: 105, type: "односпальне односпальне односпальне", sea: true, maxGuests: 3}, {number: 106, type: "односпальне односпальне", maxGuests: 2}, {number: 107, type: "односпальне односпальне", maxGuests: 2}, {number: 108, type: "односпальне односпальне", maxGuests: 2}, {number: 109, type: "односпальне односпальне", maxGuests: 2}, {number: 110, type: "односпальне односпальне", maxGuests: 2}, {number: 111, type: "односпальне односпальне односпальне", maxGuests: 3}, {number: 112, type: "двоспальне односпальне", maxGuests: 3}, {number: 113, type: "односпальне односпальне", maxGuests: 2}, {number: 114, type: "односпальне односпальне", maxGuests: 2}],
-          2: [{number: 201, type: "односпальне односпальне", maxGuests: 2}, {number: 202, type: "односпальне односпальне", maxGuests: 2}, {number: 203, type: "односпальне односпальне", maxGuests: 2}, {number: 204, type: "односпальне односпальне односпальне", sea: true, maxGuests: 3}, {number: 205, type: "односпальне односпальне односпальне", sea: true, maxGuests: 3}, {number: 206, type: "односпальне односпальне + extra bed", maxGuests: 3}, {number: 207, type: "односпальне односпальне + extra bed", maxGuests: 3}, {number: 208, type: "односпальне односпальне", maxGuests: 2}, {number: 209, type: "односпальне односпальне", maxGuests: 2}, {number: 210, type: "односпальне односпальне", maxGuests: 2}, {number: 211, type: "двоспальне односпальне + extra bed", maxGuests: 3}, {number: 212, type: "двоспальне односпальне + extra bed ", maxGuests: 3}, {number: 213, type: "односпальне односпальне", maxGuests: 2}, {number: 214, type: "односпальне односпальне", maxGuests: 2}],
-          3: [{number: 301, type: "односпальне односпальне", maxGuests: 2}, {number: 302, type: "односпальне односпальне + extra bed", maxGuests: 3}, {number: 303, type: "односпальне односпальне + extra bed", maxGuests: 3}, {number: 304, type: "двоспальне односпальне", sea: true, maxGuests: 3}, {number: 305, type: "односпальне односпальне односпальне", sea: true, maxGuests: 3}, {number: 306, type: "односпальне односпальне", maxGuests: 2}, {number: 307, type: "односпальне односпальне", maxGuests: 2}, {number: 308, type: "односпальне односпальне", maxGuests: 2}, {number: 309, type: "односпальне односпальне", maxGuests: 2}, {number: 310, type: "односпальне односпальне", maxGuests: 2}, {number: 311, type: "двоспальне односпальне", maxGuests: 3}, {number: 312, type: "двоспальне односпальне", maxGuests: 3}, {number: 313, type: "односпальне односпальне", maxGuests: 2}, {number: 314, type: "двоспальне (без спинки) + extra bed", maxGuests: 3}]
+          1: [
+            {number: 101, type: "односпальне односпальне", maxGuests: 2},
+            {number: 102, type: "односпальне односпальне", maxGuests: 2},
+            {number: 103, type: "односпальне односпальне", maxGuests: 2},
+            {number: 104, type: "двоспальне односпальне", sea: true, maxGuests: 3},
+            {number: 105, type: "односпальне односпальне односпальне", sea: true, maxGuests: 3},
+            {number: 106, type: "односпальне односпальне", maxGuests: 2},
+            {number: 107, type: "односпальне односпальне", maxGuests: 2},
+            {number: 108, type: "односпальне односпальне", maxGuests: 2},
+            {number: 109, type: "односпальне односпальне", maxGuests: 2},
+            {number: 110, type: "односпальне односпальне", maxGuests: 2},
+            {number: 111, type: "односпальне односпальне односпальне", maxGuests: 3},
+            {number: 112, type: "двоспальне односпальне", maxGuests: 3},
+			{number: 113, type: "односпальне односпальне", maxGuests: 2},
+			{number: 114, type: "односпальне односпальне", maxGuests: 2}
+          ],
+          2: [
+            {number: 201, type: "односпальне односпальне", maxGuests: 2}, 
+            {number: 202, type: "односпальне односпальне", maxGuests: 2}, 
+            {number: 203, type: "односпальне односпальне", maxGuests: 2},
+            {number: 204, type: "односпальне односпальне односпальне", sea: true, maxGuests: 3}, 
+            {number: 205, type: "односпальне односпальне односпальне", sea: true, maxGuests: 3},
+            {number: 206, type: "односпальне односпальне + extra bed", maxGuests: 3}, 
+            {number: 207, type: "односпальне односпальне + extra bed", maxGuests: 3},
+            {number: 208, type: "односпальне односпальне", maxGuests: 2}, 
+            {number: 209, type: "односпальне односпальне", maxGuests: 2}, 
+            {number: 210, type: "односпальне односпальне", maxGuests: 2},
+            {number: 211, type: "двоспальне односпальне + extra bed", maxGuests: 3}, 
+            {number: 212, type: "двоспальне односпальне + extra bed ", maxGuests: 3},
+            {number: 213, type: "односпальне односпальне", maxGuests: 2}, 
+            {number: 214, type: "односпальне односпальне", maxGuests: 2}
+          ],
+          3: [
+            {number: 301, type: "односпальне односпальне", maxGuests: 2}, 
+            {number: 302, type: "односпальне односпальне + extra bed", maxGuests: 3}, 
+            {number: 303, type: "односпальне односпальне + extra bed", maxGuests: 3}, 
+            {number: 304, type: "двоспальне односпальне", sea: true, maxGuests: 3},
+            {number: 305, type: "односпальне односпальне односпальне", sea: true, maxGuests: 3}, 
+            {number: 306, type: "односпальне односпальне", maxGuests: 2},
+            {number: 307, type: "односпальне односпальне", maxGuests: 2}, 
+            {number: 308, type: "односпальне односпальне", maxGuests: 2}, 
+            {number: 309, type: "односпальне односпальне", maxGuests: 2},
+            {number: 310, type: "односпальне односпальне", maxGuests: 2}, 
+            {number: 311, type: "двоспальне односпальне", maxGuests: 3}, 
+            {number: 312, type: "двоспальне односпальне", maxGuests: 3}, 
+            {number: 313, type: "односпальне односпальне", maxGuests: 2},
+            {number: 314, type: "двоспальне (без спинки) + extra bed", maxGuests: 3}
+          ]
         }
       }
     };
@@ -89,45 +146,49 @@
       return new Date() >= new Date(2026, m-1, d);
     }
 
-    async function loadRooms() {
-      try {
-        const response = await fetch(API_URL, { method: "GET", mode: "cors" });
-        const allData = await response.json();
-        database = {};
-        for (let i = 1; i < allData.length; i++) {
-          const [period, roomNum, reqId, adults, kids612, kidsUnder6, total] = allData[i];
-          if (!database[period]) database[period] = [];
-          database[period].push({ number: parseInt(roomNum), booked: true, guests: { requestNum: reqId, adults: parseInt(adults), kids612: parseInt(kids612), kidsUnder6: parseInt(kidsUnder6), total: parseInt(total) } });
-        }
-      } catch (err) { console.error("Помилка:", err); }
-
+    function loadRooms() {
       currentPeriod = document.getElementById('checkin').value;
       const statusEl = document.getElementById('periodStatus');
-      statusEl.textContent = isPeriodLocked(currentPeriod) ? "⚠️ Заїзд триває або завершився — зміни заблоковані" : "✅ Можна бронювати";
+      
+      statusEl.textContent = isPeriodLocked(currentPeriod) 
+        ? "⚠️ Заїзд триває або завершився — зміни заблоковані" 
+        : "✅ Можна бронювати";
       statusEl.className = isPeriodLocked(currentPeriod) ? "bg-red-100 text-red-700 p-4 rounded-2xl" : "bg-green-100 text-green-700 p-4 rounded-2xl";
 
       const grid = document.getElementById('roomsGrid');
       grid.innerHTML = '';
-      Object.keys(hotelStructure.konstantin.floors).forEach(floorNum => {
-        const rooms = hotelStructure.konstantin.floors[floorNum];
-        let html = `<div class="floor-header p-4 rounded-2xl text-xl font-bold mb-6">Поверх ${floorNum}</div><div class="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-6 gap-8">`;
+
+      const floors = hotelStructure.konstantin.floors;
+
+      Object.keys(floors).forEach(floorNum => {
+        const rooms = floors[floorNum];
+        let html = `<div class="floor-header p-4 rounded-2xl text-xl font-bold mb-6">Поверх ${floorNum}</div>
+                    <div class="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-6 gap-8">`;
+
         rooms.forEach(room => {
-          const dbRoom = database[currentPeriod]?.find(r => r.number === room.number);
+          const dbRoom = database[currentPeriod] ? database[currentPeriod].find(r => r.number === room.number) : null;
           const isBooked = dbRoom && dbRoom.booked;
           const seaIcon = room.sea ? '<span class="wave">🌊</span> ' : '';
-          html += `<div onclick="handleRoomClick(${room.number})" class="room p-4 rounded-2xl cursor-pointer shadow text-center ${isBooked ? 'booked' : 'free'}">
-                     <div class="text-2xl font-bold">${room.number}</div>
-                     <div class="text-xs mt-1">${seaIcon}${room.type}</div>
-                     ${isBooked ? `<div class="text-sm mt-2 font-bold bg-white/30 py-1 rounded">№${dbRoom.guests.requestNum}</div>` : ''}
-                   </div>`;
+
+          html += `
+            <div onclick="handleRoomClick(${room.number})" 
+                 class="room p-4 rounded-2xl cursor-pointer shadow text-center ${isBooked ? 'booked' : 'free'}">
+              <div class="text-2xl font-bold">${room.number}</div>
+              <div class="text-xs mt-1">${seaIcon}${room.type}</div>
+              ${isBooked ? `<div class="text-sm mt-2 font-bold bg-white/30 py-1 rounded">№${dbRoom.guests.requestNum}</div>` : ''}
+            </div>`;
         });
-        grid.innerHTML += html + `</div>`;
+
+        html += `</div>`;
+        grid.innerHTML += html;
       });
     }
 
     function handleRoomClick(roomNum) {
       if (isPeriodLocked(currentPeriod)) return alert("Бронювання заблоковано");
+
       const dbRoom = database[currentPeriod] ? database[currentPeriod].find(r => r.number === roomNum) : null;
+
       if (dbRoom && dbRoom.booked) {
         if (confirm(`Кімната ${roomNum} заброньована заявкою №${dbRoom.guests.requestNum}\n\nЩо зробити?`)) {
           const action = prompt("1 - Відмінити бронювання\n2 - Перенести в іншу кімнату\nВведіть цифру:");
@@ -136,42 +197,145 @@
         }
         return;
       }
+
+      // Бронювання нової кімнати
       document.getElementById('modalRoomNumber').textContent = roomNum;
       document.getElementById('bookingModal').classList.remove('hidden');
     }
 
     async function confirmBooking() {
-      const requestNum = document.getElementById('requestNum').value.trim();
-      const adults = parseInt(document.getElementById('adults').value) || 0;
-      const kids612 = parseInt(document.getElementById('kids612').value) || 0;
-      const kidsUnder6 = parseInt(document.getElementById('kidsUnder6').value) || 0;
-      const total = adults + kids612 + kidsUnder6;
-      const roomNum = parseInt(document.getElementById('modalRoomNumber').textContent);
-      if (!requestNum || requestNum.length < 4) return alert("Введіть номер заявки (4-5 цифр)");
-      const bookingData = { action: "book", period: currentPeriod, room: roomNum, requestId: requestNum, adults: adults, kids612: kids612, kidsUnder6: kidsUnder6, total: total };
-      try {
-        await fetch(API_URL, { method: "POST", mode: "cors", headers: { "Content-Type": "application/json" }, body: JSON.stringify(bookingData) });
-        alert("✅ Кімната заброньована!");
-        closeModal();
-        loadRooms();
-      } catch (e) { alert("Помилка підключення до сервера!"); }
-    }
+  const requestNum = document.getElementById('requestNum').value.trim();
+  const adults = parseInt(document.getElementById('adults').value) || 0;
+  const kids612 = parseInt(document.getElementById('kids612').value) || 0;
+  const kidsUnder6 = parseInt(document.getElementById('kidsUnder6').value) || 0;
+  const total = adults + kids612 + kidsUnder6;
+  const roomNum = parseInt(document.getElementById('modalRoomNumber').textContent);
+
+  if (!requestNum || requestNum.length < 4) return alert("Введіть номер заявки (4-5 цифр)");
+
+  // 1. ПЕРЕВІРКА МІСТКОСТІ (як ми раніше робили)
+  let maxCapacity = 4;
+  Object.values(hotelStructure.konstantin.floors).forEach(floor => {
+    const room = floor.find(r => r.number === roomNum);
+    if (room) maxCapacity = room.maxGuests || 4;
+  });
+
+  if (total > maxCapacity) {
+    return alert(`Недостатньо місць! У кімнаті ${roomNum} максимум ${maxCapacity} особи.`);
+  }
+
+  // 2. ВІДПРАВКА НА СЕРВЕР (Google Sheets)
+  const bookingData = {
+    action: "book",
+    period: currentPeriod,
+    room: roomNum,
+    requestId: requestNum,
+    adults: adults,
+    kids612: kids612,
+    kidsUnder6: kidsUnder6,
+    total: total
+  };
+
+  try {
+    // Вставте сюди свій URL, який ви отримали після розгортання
+    await fetch("ВАШ_URL_ВЕБ_ДОДАТКА", {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(bookingData)
+    });
+
+    alert("✅ Кімната заброньована!");
+    closeModal();
+    // Після цього можна оновити сторінку або завантажити актуальні дані
+  } catch (error) {
+    alert("Помилка підключення до сервера!");
+  }
+}
 
     function cancelBooking(roomNum) {
       if (!confirm(`Відмінити бронювання кімнати ${roomNum}?`)) return;
-      const bookingData = { action: "cancel", period: currentPeriod, room: roomNum };
-      fetch(API_URL, { method: "POST", mode: "cors", body: JSON.stringify(bookingData) }).then(() => loadRooms());
+      const room = database[currentPeriod].find(r => r.number === roomNum);
+      if (room) {
+        room.booked = false;
+        room.guests = null;
+      }
+      localStorage.setItem('konstantinDB', JSON.stringify(database));
+      loadRooms();
     }
 
     function moveBooking(oldRoomNum) {
-      const newRoomNum = parseInt(prompt(`Введіть номер нової кімнати (поточна: ${oldRoomNum}):`));
-      if (!newRoomNum) return;
-      const bookingData = { action: "move", period: currentPeriod, oldRoom: oldRoomNum, newRoom: newRoomNum };
-      fetch(API_URL, { method: "POST", mode: "cors", body: JSON.stringify(bookingData) }).then(() => loadRooms());
+  // 1. Ініціалізація, якщо масив для періоду відсутній
+  if (!database[currentPeriod]) {
+    database[currentPeriod] = [];
+  }
+
+  const newRoomNumInput = prompt(`Введіть номер нової кімнати (поточна: ${oldRoomNum}):`);
+  const newRoomNum = parseInt(newRoomNumInput);
+
+  if (!newRoomNum) return; // Користувач натиснув "Скасувати"
+
+  // 2. Шукаємо цільову кімнату в структурі готелю (щоб перевірити, чи номер взагалі існує)
+  let roomExists = false;
+  Object.values(hotelStructure.konstantin.floors).forEach(floor => {
+    if (floor.find(r => r.number === newRoomNum)) roomExists = true;
+  });
+
+  if (!roomExists) {
+    alert("Кімнату з таким номером не знайдено в готелі!");
+    return;
+  }
+
+  // 3. Шукаємо, чи стара кімната є в БД
+  const oldRoom = database[currentPeriod].find(r => r.number === oldRoomNum);
+  if (!oldRoom) return alert("Помилка: стара кімната не знайдена в базі.");
+
+  // 4. Перевіряємо нову кімнату в БД
+  const newRoom = database[currentPeriod].find(r => r.number === newRoomNum);
+  
+  // Якщо кімната є в БД і вона заброньована — помилка
+  if (newRoom && newRoom.booked) {
+    return alert("Ця кімната вже зайнята!");
+  }
+
+  // 5. Виконуємо перенос
+  if (newRoom) {
+    // Якщо об'єкт в БД існує, але вільний (booked: false)
+    newRoom.booked = true;
+    newRoom.guests = { ...oldRoom.guests };
+  } else {
+    // Якщо об'єкта в БД ще немає, створюємо його
+    database[currentPeriod].push({
+      number: newRoomNum,
+      booked: true,
+      guests: { ...oldRoom.guests }
+    });
+  }
+
+  // Очищаємо стару кімнату
+  oldRoom.booked = false;
+  oldRoom.guests = null;
+
+  // Зберігаємо і оновлюємо інтерфейс
+  localStorage.setItem('konstantinDB', JSON.stringify(database));
+  loadRooms();
+  alert(`✅ Заявка успішно перенесена в ${newRoomNum}`);
+}
+
+    function closeModal() {
+      document.getElementById('bookingModal').classList.add('hidden');
     }
 
-    function closeModal() { document.getElementById('bookingModal').classList.add('hidden'); }
-    window.onload = () => { document.getElementById('currentDate').textContent = `Сьогодні: ${new Date().toLocaleDateString('uk-UA')}`; populatePeriods(); document.getElementById('checkin').value = checkinPeriods[3]; loadRooms(); };
+    window.onload = () => {
+      document.getElementById('currentDate').textContent = `Сьогодні: ${new Date().toLocaleDateString('uk-UA')}`;
+      
+      const saved = localStorage.getItem('konstantinDB');
+      if (saved) database = JSON.parse(saved);
+
+      populatePeriods();
+      document.getElementById('checkin').value = checkinPeriods[3];
+      loadRooms();
+    };
   </script>
 </body>
 </html>
