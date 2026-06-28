@@ -157,32 +157,41 @@
     }
 
     function loadRooms() {
-      const grid = document.getElementById('roomsGrid');
-      grid.innerHTML = '';
-      const floors = hotelStructure.konstantin.floors;
+  const grid = document.getElementById('roomsGrid');
+  grid.innerHTML = '';
+  
+  const floors = hotelStructure.konstantin.floors;
+  
+  console.log("Завантажуємо кімнати. Поточний period:", currentPeriod);
+  console.log("Дані в database:", database[currentPeriod]);
 
-      Object.keys(floors).forEach(floorNum => {
-        const rooms = floors[floorNum];
-        let html = `<div class="floor-header p-4 rounded-2xl text-xl font-bold mb-6">Поверх ${floorNum}</div>
-                    <div class="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-6 gap-8">`;
+  Object.keys(floors).forEach(floorNum => {
+    const rooms = floors[floorNum];
+    let html = `<div class="floor-header p-4 rounded-2xl text-xl font-bold mb-6">Поверх ${floorNum}</div>
+                <div class="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-6 gap-8">`;
 
-        rooms.forEach(room => {
-          const dbRoom = database[currentPeriod]?.find(r => r.number === room.number);
-          const isBooked = dbRoom && dbRoom.booked;
-          const seaIcon = room.sea ? '<span class="wave">🌊</span> ' : '';
+    rooms.forEach(room => {
+      const dbRoom = database[currentPeriod]?.find(r => Number(r.number) === Number(room.number));
+      
+      const isBooked = dbRoom && dbRoom.booked === true;
+      
+      console.log(`Кімната ${room.number} → isBooked: ${isBooked}`, dbRoom); // діагностика
 
-          html += `
-            <div onclick="handleRoomClick(${room.number})"
-                 class="room p-4 rounded-2xl cursor-pointer shadow text-center ${isBooked ? 'booked' : 'free'}">
-              <div class="text-2xl font-bold">${room.number}</div>
-              <div class="text-xs mt-1">${seaIcon}${room.type}</div>
-              ${isBooked ? `<div class="request-num">№${dbRoom.guests.requestNum}</div>` : ''}
-            </div>`;
-        });
-        html += `</div>`;
-        grid.innerHTML += html;
-      });
-    }
+      const seaIcon = room.sea ? '<span class="wave">🌊</span> ' : '';
+      
+      html += `
+        <div onclick="handleRoomClick(${room.number})"
+             class="room p-4 rounded-2xl cursor-pointer shadow text-center ${isBooked ? 'booked' : 'free'}">
+          <div class="text-2xl font-bold">${room.number}</div>
+          <div class="text-xs mt-1">${seaIcon}${room.type}</div>
+          ${isBooked ? `<div class="request-num">№${dbRoom.guests?.requestNum || ''}</div>` : ''}
+        </div>`;
+    });
+
+    html += `</div>`;
+    grid.innerHTML += html;
+  });
+}
 
     async function loadData() {
       currentPeriod = document.getElementById('checkin').value;
@@ -214,32 +223,49 @@
     }
 
     async function confirmBooking() {
-      const requestNum = document.getElementById('requestNum').value.trim();
-      const roomNum = parseInt(document.getElementById('modalRoomNumber').textContent);
+  const requestNum = document.getElementById('requestNum').value.trim();
+  const roomNum = parseInt(document.getElementById('modalRoomNumber').textContent);
 
-      if (!requestNum || requestNum.length < 4) return alert("Введіть номер заявки (4-5 цифр)");
+  if (!requestNum || requestNum.length < 4) {
+    return alert("Введіть номер заявки (4-5 цифр)");
+  }
 
-      const bookingData = {
-        action: "book",
-        period: currentPeriod,
-        room: roomNum,
-        requestId: requestNum
-      };
+  const bookingData = {
+    action: "book",
+    period: currentPeriod,
+    room: roomNum,
+    requestId: requestNum
+  };
 
-      try {
-        await fetch(WEB_APP_URL, {
-          method: "POST",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify(bookingData)
-        });
+  try {
+    const response = await fetch(WEB_APP_URL + `?t=${Date.now()}`, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(bookingData)
+    });
 
-        alert("✅ Кімната заброньована!");
-        closeModal();
-        await loadData();        // оновлюємо дані
-      } catch (e) {
-        alert("Помилка підключення");
+    const result = await response.json();
+
+    if (result.success) {
+      alert("✅ Кімната заброньована!");
+      closeModal();
+      
+      // Оновлюємо локальну базу відразу
+      if (result.bookings) {
+        database[currentPeriod] = result.bookings;
+      } else {
+        await loadBookings(currentPeriod); // fallback
       }
+      
+      loadRooms();
+    } else {
+      alert(result.message || "Не вдалося забронювати");
     }
+  } catch (e) {
+    console.error(e);
+    alert("Помилка підключення");
+  }
+}
 
     async function cancelBooking(roomNum) {
       if (!confirm(`Відмінити бронювання ${roomNum}?`)) return;
